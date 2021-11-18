@@ -5,6 +5,8 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize( window.innerWidth, window.innerHeight );
 document.body.appendChild( renderer.domElement );
 
+renderer.setClearColor( 0xb7c3f3, 1 );
+
 const light = new THREE.AmbientLight( 0xffffff ); // soft white light
 scene.add( light );
 
@@ -18,13 +20,35 @@ camera.position.z = 5;
 // Instantiate a loader
 const loader = new THREE.GLTFLoader();
 
-loader.load(
-    '../models/scene.gltf',
-    function (gltf) {
-        scene.add( gltf.scene );
-        gltf.scene.scale.set(0.4, 0.4, 0.4);
-    },
-);
+// creating doll class
+class Doll{
+    constructor(){
+        loader.load(
+            '../models/scene.gltf',
+            (gltf) => {
+                scene.add( gltf.scene );
+                gltf.scene.scale.set(0.4, 0.4, 0.4);
+                gltf.scene.position.set(0, -1, 0);
+                this.doll = gltf.scene;
+            },
+        );
+    }
+
+    lookBackword(){
+        // this.doll.rotation.y = -3.15;
+        gsap.to(this.doll.rotation, {duration: .50, y: -3.15});
+    }
+
+    lookForward(){
+        // this.doll.rotation.y = 0;
+        gsap.to(this.doll.rotation, {duration: .50, y: 0});
+    }
+}
+
+let doll = new Doll();
+setTimeout(() => {
+    doll.lookBackword();
+}, 1000);
 
 function animate() {
     renderer.render( scene, camera );
