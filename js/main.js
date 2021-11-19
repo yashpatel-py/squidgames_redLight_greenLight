@@ -1,26 +1,31 @@
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+const camera = new THREE.PerspectiveCamera(
+    75,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    1000
+);
 
 const renderer = new THREE.WebGLRenderer();
-renderer.setSize( window.innerWidth, window.innerHeight );
-document.body.appendChild( renderer.domElement );
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
 
-renderer.setClearColor( 0xb7c3f3, 1 );
+renderer.setClearColor(0xb7c3f3, 1);
 
-const light = new THREE.AmbientLight( 0xffffff ); // soft white light
-scene.add( light );
+const light = new THREE.AmbientLight(0xffffff); // soft white light
+scene.add(light);
 
 // creating global variablesc
-const start_position = 3
-const end_position = -start_position
+const start_position = 3;
+const end_position = -start_position;
 
-function createCube(size, positionX, rotY = 0, color = 0xfbc851){
+function createCube(size, positionX, rotY = 0, color = 0xfbc851) {
     const geometry = new THREE.BoxGeometry(size.w, size.h, size.d);
-    const material = new THREE.MeshBasicMaterial( { color: color } );
-    const cube = new THREE.Mesh( geometry, material );
+    const material = new THREE.MeshBasicMaterial({ color: color });
+    const cube = new THREE.Mesh(geometry, material);
     cube.position.x = positionX;
     cube.rotation.y = rotY;
-    scene.add( cube );
+    scene.add(cube);
     return cube;
 }
 
@@ -30,52 +35,99 @@ camera.position.z = 5;
 const loader = new THREE.GLTFLoader();
 
 // creating doll class
-class Doll{
-    constructor(){
-        loader.load(
-            '../models/scene.gltf',
-            (gltf) => {
-                scene.add( gltf.scene );
-                gltf.scene.scale.set(0.4, 0.4, 0.4);
-                gltf.scene.position.set(0, -1, 0);
-                this.doll = gltf.scene;
-            },
-        );
+class Doll {
+    constructor() {
+        loader.load("../models/scene.gltf", (gltf) => {
+            scene.add(gltf.scene);
+            gltf.scene.scale.set(0.30, 0.30, 0.30);
+            gltf.scene.position.set(0, -1, 0);
+            this.doll = gltf.scene;
+        });
     }
 
-    lookBackword(){
+    lookBackword() {
         // this.doll.rotation.y = -3.15;
-        gsap.to(this.doll.rotation, {duration: .50, y: -3.15});
+        gsap.to(this.doll.rotation, { duration: 0.5, y: -3.15 });
     }
 
-    lookForward(){
+    lookForward() {
         // this.doll.rotation.y = 0;
-        gsap.to(this.doll.rotation, {duration: .50, y: 0});
+        gsap.to(this.doll.rotation, { duration: 0.45, y: 0 });
     }
 }
 
-function createTrack(){
-    createCube({w: start_position * 2 + .1, h: 1.5, d: 1}, 0, 0, 0xe5a716).position.z = -1;
-    createCube({w: .2, h: 1.5, d: 1}, start_position, -.35);
-    createCube({w: .2, h: 1.5, d: 1}, end_position,  .35);
+function createTrack() {
+    createCube(
+        { w: start_position * 2 + 0.2, h: 1.5, d: 1 },
+        0,
+        0,
+        0xe5a716
+    ).position.z = -1;
+    createCube({ w: 0.2, h: 1.5, d: 1 }, start_position, -0.35);
+    createCube({ w: 0.2, h: 1.5, d: 1 }, end_position, 0.35);
 }
 createTrack();
 
+class Player {
+    constructor() {
+        const geometry = new THREE.SphereGeometry(0.3, 32, 16);
+        const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        const sphere = new THREE.Mesh(geometry, material);
+        sphere.position.z = 1;
+        sphere.position.x = start_position;
+        scene.add(sphere);
+        this.player = sphere;
+        this.playerInfo = {
+            positionX: start_position,
+            valocity: 0,
+        };
+    }
+
+    run() {
+        this.playerInfo.valocity = .03;
+    }
+
+    stop() {
+        gsap.to(this.playerInfo, { duration: .1, valocity: 0 });
+    }
+
+    update() {
+        this.playerInfo.positionX -= this.playerInfo.valocity;
+        this.player.position.x = this.playerInfo.positionX;
+    }
+}
+
+const player = new Player();
+
 let doll = new Doll();
+
 setTimeout(() => {
     doll.lookBackword();
 }, 1000);
 
 function animate() {
-    renderer.render( scene, camera );
-	requestAnimationFrame( animate );
+    renderer.render(scene, camera);
+    requestAnimationFrame(animate);
+    player.update();
 }
 animate();
 
-window.addEventListener( 'resize', onWindowResize, false );
+window.addEventListener("resize", onWindowResize, false);
 
 function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
-    renderer.setSize( window.innerWidth, window.innerHeight );
+    renderer.setSize(window.innerWidth, window.innerHeight);
 }
+
+window.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowUp") {
+        player.run();
+    }
+});
+
+window.addEventListener("keyup", (e) => {
+    if (e.key === "ArrowUp") {
+        player.stop();
+    }
+});
